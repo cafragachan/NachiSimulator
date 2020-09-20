@@ -116,11 +116,6 @@ void AzSpaceManager::UpdateRobot()
 	else
 	{
 		Nachi.forwardKinematics(zJoint);
-		if (GEngine)
-		{
-			FString message = FString::SanitizeFloat(Nachi.jointRotations[0].rotation);
-			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, *message);
-		}
 	}
 }
 
