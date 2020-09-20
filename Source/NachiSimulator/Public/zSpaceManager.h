@@ -99,7 +99,8 @@ public:
 
 	int targetCounter = 0;
 
-	string dirPath = "D:/Repos/Alice/ALICE_PLATFORM/x64/Release/EXE/data/NACHI_MZ07";
+	//string dirPath = "D:/Repos/Alice/ALICE_PLATFORM/x64/Release/EXE/data/NACHI_MZ07";
+	string dirPath;
 	string robotName = "Nachi_MZ07.json";
 	vector<string> robotFile;
 
@@ -109,6 +110,9 @@ public:
 
 protected:
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TArray<float> initialRotations;
+
 	void RobotSetup();
 	void UpdateRobot();
 
@@ -116,6 +120,8 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void SetJointRotations(float j1, float j2, float j3, float j4, float j5, float j6);
+
+	void SetJointRotations(TArray<float> rotations);
 
 	UFUNCTION(BlueprintCallable)
 	void SetRobotIK(bool isIK);
@@ -131,6 +137,12 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	int32 GetTargetCount();
+
+	UFUNCTION(BlueprintCallable)
+	void ExportJointRotations();
+
+	UFUNCTION(BlueprintCallable)
+	void ResetRobot();
 
 private:
 

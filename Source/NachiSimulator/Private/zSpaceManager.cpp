@@ -3,6 +3,9 @@
 
 #include "zSpaceManager.h"
 
+#include "Misc/Paths.h"
+#include "Engine/GameEngine.h"
+
 // Sets default values
 AzSpaceManager::AzSpaceManager()
 {
@@ -26,11 +29,23 @@ void AzSpaceManager::BeginPlay()
 {
 	Super::BeginPlay();
 
+	//////////get path of nachi's parts needed when packaged project
+
+	FString pth = FPaths::ProjectDir();
+	std::string stpPath = std::string(TCHAR_TO_UTF8(*pth));
+
+	std::string x = "\\";
+	std::string	y = "/";
+	size_t pos;
+	while ((pos = stpPath.find(x)) != std::string::npos) {
+		stpPath.replace(pos, 1, y);
+	}
+
+	dirPath = stpPath + "NACHI_MZ07";
+
+	///////////
 	RobotSetup();
 	DisplayRobot();
-
-
-
 }
 
 // Called every frame
@@ -38,10 +53,7 @@ void AzSpaceManager::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-
-
 	UpdateRobot();
-
 	DrawRobotMesh();
 }
 
@@ -50,6 +62,8 @@ void AzSpaceManager::Tick(float DeltaTime)
 
 void AzSpaceManager::RobotSetup()
 {
+	initialRotations.Empty();
+
 	int nF = coreUtils.getNumfiles_Type(dirPath, zOBJ);
 	if (nF < 8) nF = 8;
 
@@ -69,7 +83,10 @@ void AzSpaceManager::RobotSetup()
 	Nachi.setEndEffector(robotEE);
 
 	//////////
-	//Nachi.createTargetsfromFile(dirPath + "/path.txt", zTXT);
+	for (int i = 0; i < 6; i++)
+	{
+		initialRotations.Add(Nachi.jointRotations[i].rotation);
+	}
 }
 
 void AzSpaceManager::UpdateRobot()
@@ -93,27 +110,17 @@ void AzSpaceManager::UpdateRobot()
 			Nachi.setTarget(robotTarget);
 
 			zVector posIK = Nachi.inverseKinematics();
-
-			//////// Store G-Code
-
-			if (zRobot_GCODE)
-			{
-				for (int i = 0; i < Nachi.robotTargets.size(); i++)
-				{
-					Nachi.setTarget(Nachi.robotTargets[i]);
-
-					posIK = Nachi.inverseKinematics();
-					Nachi.gCode_store(posIK, zRobotVel, zMoveJoint, zEENeutral);
-				}
-
-				zRobot_GCODE = !zRobot_GCODE;
-			}
 		}
 	}
 
 	else
 	{
 		Nachi.forwardKinematics(zJoint);
+		if (GEngine)
+		{
+			FString message = FString::SanitizeFloat(Nachi.jointRotations[0].rotation);
+			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, *message);
+		}
 	}
 }
 
@@ -128,6 +135,12 @@ void AzSpaceManager::SetJointRotations(float j1, float j2, float j3, float j4, f
 	Nachi.jointRotations[3].rotation = j4;
 	Nachi.jointRotations[4].rotation = j5;
 	Nachi.jointRotations[5].rotation = j6;
+}
+
+void AzSpaceManager::SetJointRotations(TArray<float> rotations)
+{
+	for (int i = 0; i < 6; i++)
+		Nachi.jointRotations[i].rotation = initialRotations[i];
 }
 
 void AzSpaceManager::SetRobotIK(bool isIK)
@@ -162,6 +175,61 @@ void AzSpaceManager::SetTargetCounter(int32 Counter)
 int32 AzSpaceManager::GetTargetCount()
 {
 	return Nachi.robotTargets.size();
+}
+
+void AzSpaceManager::ExportJointRotations()
+{
+	zVector posIK;
+
+	for (int i = 0; i < Nachi.robotTargets.size(); i++)
+	{
+		Nachi.setTarget(Nachi.robotTargets[i]);
+
+		posIK = Nachi.inverseKinematics();
+		Nachi.gCode_store(posIK, zRobotVel, zMoveJoint, zEENeutral);
+	}
+
+	////
+
+	FString projDir = FPaths::ProjectDir();
+	std::string infilename = std::string(TCHAR_TO_UTF8(*projDir)) + "/joint_rotations.txt";
+	ofstream myfile;
+	myfile.open(infilename.c_str());
+
+	if (myfile.fail())
+	{
+		UE_LOG(LogTemp, Warning, TEXT(" error in opening file  "));
+		return;
+	}
+
+	for (int i = 0; i < Nachi.robot_gCode.size(); i++)
+	{
+	std::string jointSequence =   std::to_string(Nachi.robot_gCode[i].rotations[0].rotation) + ","
+								+ std::to_string(Nachi.robot_gCode[i].rotations[1].rotation) + ","
+								+ std::to_string(Nachi.robot_gCode[i].rotations[2].rotation) + ","
+								+ std::to_string(Nachi.robot_gCode[i].rotations[3].rotation) + ","
+								+ std::to_string(Nachi.robot_gCode[i].rotations[4].rotation) + ","
+								+ std::to_string(Nachi.robot_gCode[i].rotations[5].rotation);
+
+		myfile << jointSequence << endl;
+	}
+
+	//close file
+	myfile.close();
+
+	UE_LOG(LogTemp, Warning, TEXT(" nG-CODE Exported Succesfully "));
+}
+
+void AzSpaceManager::ResetRobot()
+{
+	zRobot_IK = false;
+	
+	SetJointRotations(initialRotations);
+	
+	ObjectToCut->ClearAllMeshSections();
+
+	UpdateRobot();
+	DrawRobotMesh();
 }
 
 void AzSpaceManager::DisplayRobot()
