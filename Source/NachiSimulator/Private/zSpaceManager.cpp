@@ -227,9 +227,9 @@ void AzSpaceManager::ExportJointRotations()
 								+ std::to_string(Nachi.robot_gCode[i].rotations[2].rotation) + ","
 								+ std::to_string(Nachi.robot_gCode[i].rotations[3].rotation) + ","
 								+ std::to_string(Nachi.robot_gCode[i].rotations[4].rotation) + ","
-								+ std::to_string(Nachi.robot_gCode[i].rotations[5].rotation);
+								+ std::to_string(Nachi.robot_gCode[i].rotations[5].rotation) + ",";
 
-		myfile << jointSequence << endl;
+		//myfile << jointSequence << endl;
 	}
 
 	//close file
@@ -254,11 +254,11 @@ FString AzSpaceManager::GetIKRotations()
 	for (int i = 0; i < Nachi.robot_gCode.size(); i++)
 	{
 		std::string jointSequence = std::to_string(Nachi.robot_gCode[i].rotations[0].rotation) + ","
-			+ std::to_string(Nachi.robot_gCode[i].rotations[1].rotation) + ","
-			+ std::to_string(Nachi.robot_gCode[i].rotations[2].rotation) + ","
-			+ std::to_string(Nachi.robot_gCode[i].rotations[3].rotation) + ","
-			+ std::to_string(Nachi.robot_gCode[i].rotations[4].rotation) + ","
-			+ std::to_string(Nachi.robot_gCode[i].rotations[5].rotation) + "\n";
+									+ std::to_string(Nachi.robot_gCode[i].rotations[1].rotation) + ","
+									+ std::to_string(Nachi.robot_gCode[i].rotations[2].rotation) + ","
+									+ std::to_string(Nachi.robot_gCode[i].rotations[3].rotation) + ","
+									+ std::to_string(Nachi.robot_gCode[i].rotations[4].rotation) + ","
+									+ std::to_string(Nachi.robot_gCode[i].rotations[5].rotation) + ",";
 
 		FString line(jointSequence.c_str());
 		Rotations.Append(line);
