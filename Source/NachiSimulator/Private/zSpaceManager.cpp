@@ -162,6 +162,29 @@ void AzSpaceManager::SetObjectPath(FString ObjPath)
 	UMeshFactory::CreateUMeshFromZMesh(zObjectMesh, ObjectToCut, true);
 }
 
+void AzSpaceManager::CreateOBJ(TArray<FString> ObjString)
+{
+	vector<std::string> lineObj;
+	
+	for (auto line : ObjString)
+	{
+		auto objStringAnsi = StringCast<ANSICHAR>(*line);
+		const char* objStringAnsiPtr = objStringAnsi.Get();
+		std::string objString(objStringAnsiPtr);
+
+		lineObj.push_back(objString);
+	}
+	
+
+	zFnMesh fnMesh(zObjectMesh);
+	fnMesh.fromOBJ_string(lineObj);
+
+	UE_LOG(LogTemp, Warning, TEXT("number of face polys: %i "), fnMesh.numPolygons());
+	//UE_LOG(LogTemp, Warning, TEXT("FILE %s"), *FString(objString.c_str()));
+
+	UMeshFactory::CreateUMeshFromZMesh(zObjectMesh, ObjectToCut, true);
+}
+
 void AzSpaceManager::SetTargetCounter(int32 Counter)
 {
 	targetCounter = Counter;
@@ -215,9 +238,41 @@ void AzSpaceManager::ExportJointRotations()
 	UE_LOG(LogTemp, Warning, TEXT(" nG-CODE Exported Succesfully "));
 }
 
+FString AzSpaceManager::GetIKRotations()
+{
+	FString Rotations;
+	zVector posIK;
+
+	for (int i = 0; i < Nachi.robotTargets.size(); i++)
+	{
+		Nachi.setTarget(Nachi.robotTargets[i]);
+
+		posIK = Nachi.inverseKinematics();
+		Nachi.gCode_store(posIK, zRobotVel, zMoveJoint, zEENeutral);
+	}
+
+	for (int i = 0; i < Nachi.robot_gCode.size(); i++)
+	{
+		std::string jointSequence = std::to_string(Nachi.robot_gCode[i].rotations[0].rotation) + ","
+			+ std::to_string(Nachi.robot_gCode[i].rotations[1].rotation) + ","
+			+ std::to_string(Nachi.robot_gCode[i].rotations[2].rotation) + ","
+			+ std::to_string(Nachi.robot_gCode[i].rotations[3].rotation) + ","
+			+ std::to_string(Nachi.robot_gCode[i].rotations[4].rotation) + ","
+			+ std::to_string(Nachi.robot_gCode[i].rotations[5].rotation) + "\n";
+
+		FString line(jointSequence.c_str());
+		Rotations.Append(line);
+	}
+
+	return Rotations;
+}
+
 void AzSpaceManager::ResetRobot()
 {
 	zRobot_IK = false;
+
+	RobotSetup();
+	DisplayRobot();
 	
 	SetJointRotations(initialRotations);
 	

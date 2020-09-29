@@ -110,7 +110,7 @@ public:
 
 protected:
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "zSpace")
 	TArray<float> initialRotations;
 
 	void RobotSetup();
@@ -118,30 +118,36 @@ protected:
 
 public:
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "zSpace")
 	void SetJointRotations(float j1, float j2, float j3, float j4, float j5, float j6);
 
 	void SetJointRotations(TArray<float> rotations);
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "zSpace")
 	void SetRobotIK(bool isIK);
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "zSpace")
 	void SetToolPath(FString ToolPath);
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "zSpace")
 	void SetObjectPath(FString ObjPath);
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "zSpace")
+	void CreateOBJ(TArray<FString> ObjString);
+
+	UFUNCTION(BlueprintCallable, Category = "zSpace")
 	void SetTargetCounter(int32 Counter);
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "zSpace")
 	int32 GetTargetCount();
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "zSpace")
 	void ExportJointRotations();
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "zSpace")
+	FString GetIKRotations();
+
+	UFUNCTION(BlueprintCallable, Category = "zSpace")
 	void ResetRobot();
 
 private:
