@@ -116,6 +116,12 @@ protected:
 	void RobotSetup();
 	void UpdateRobot();
 
+	UPROPERTY(VisibleAnywhere)
+	TArray<AActor*> FrameMeshActors;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "zSpace")
+	TSubclassOf<AActor> BP_FrameClass;
+
 public:
 
 	UFUNCTION(BlueprintCallable, Category = "zSpace")

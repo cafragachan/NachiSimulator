@@ -5,6 +5,7 @@
 
 #include "Misc/Paths.h"
 #include "Engine/GameEngine.h"
+#include "UObject/ConstructorHelpers.h"
 
 // Sets default values
 AzSpaceManager::AzSpaceManager()
@@ -22,6 +23,12 @@ AzSpaceManager::AzSpaceManager()
 	Joint_06_Mesh = CreateDefaultSubobject<UProceduralMeshComponent>("Joint_06_Mesh");
 	EE_Mesh = CreateDefaultSubobject<UProceduralMeshComponent>("EE_Mesh");
 	ObjectToCut = CreateDefaultSubobject<UProceduralMeshComponent>("ObjectToCut");
+
+
+	/*static ConstructorHelpers::FObjectFinder<UBlueprint> ItemBlueprint(TEXT("Blueprint'/Game/BP/BP_Frame.BP_Frame'"));
+	if (ItemBlueprint.Object) {
+		BP_FrameClass = (UClass*)ItemBlueprint.Object->GeneratedClass;
+	}*/
 }
 
 // Called when the game starts or when spawned
@@ -147,6 +154,52 @@ void AzSpaceManager::SetToolPath(FString ToolPath)
 {
 	std::string toolPath = std::string(TCHAR_TO_UTF8(*ToolPath));
 	Nachi.createTargetsfromFile(toolPath, zTXT);
+
+	//////////Create Spheres
+
+	if (FrameMeshActors.Num() != 0)
+	{
+		for (auto& actor : FrameMeshActors)
+		{
+			actor->Destroy();
+		}
+
+		FrameMeshActors.Empty();
+	}
+
+
+	ifstream myfile;
+	myfile.open(toolPath.c_str());
+
+	/////
+	
+
+	////////
+
+	while (!myfile.eof())
+	{
+		string str;
+		getline(myfile, str);
+
+		vector<string> perlineData = coreUtils.splitString(str, ",");
+
+		if (perlineData.size() == 12)
+		{
+
+			float x = std::atof(perlineData[9].c_str());
+			float y = std::atof(perlineData[10].c_str());
+			float z = std::atof(perlineData[11].c_str());
+
+			FVector Position(x*100, y*-100, z*100);
+			FRotator Rotation;
+
+			//GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, Position.ToString());
+
+			AActor* Frame = GetWorld()->SpawnActor<AActor>(BP_FrameClass, Position, Rotation);
+
+			FrameMeshActors.Add(Frame);
+		}
+	}
 }
 
 ///////DRAW
@@ -159,7 +212,7 @@ void AzSpaceManager::SetObjectPath(FString ObjPath)
 	zFnMesh fnMesh(zObjectMesh);
 	fnMesh.from(objPath, zOBJ, true);
 
-	UMeshFactory::CreateUMeshFromZMesh(zObjectMesh, ObjectToCut, true);
+	UMeshFactory::CreateUMeshFromZMesh(zObjectMesh, ObjectToCut, false);
 }
 
 void AzSpaceManager::CreateOBJ(TArray<FString> ObjString)
@@ -182,7 +235,7 @@ void AzSpaceManager::CreateOBJ(TArray<FString> ObjString)
 	UE_LOG(LogTemp, Warning, TEXT("number of face polys: %i "), fnMesh.numPolygons());
 	//UE_LOG(LogTemp, Warning, TEXT("FILE %s"), *FString(objString.c_str()));
 
-	UMeshFactory::CreateUMeshFromZMesh(zObjectMesh, ObjectToCut, true);
+	UMeshFactory::CreateUMeshFromZMesh(zObjectMesh, ObjectToCut, false);
 }
 
 void AzSpaceManager::SetTargetCounter(int32 Counter)
@@ -197,7 +250,7 @@ int32 AzSpaceManager::GetTargetCount()
 
 void AzSpaceManager::ExportJointRotations()
 {
-	zVector posIK;
+	/*zVector posIK;
 
 	for (int i = 0; i < Nachi.robotTargets.size(); i++)
 	{
@@ -205,14 +258,14 @@ void AzSpaceManager::ExportJointRotations()
 
 		posIK = Nachi.inverseKinematics();
 		Nachi.gCode_store(posIK, zRobotVel, zMoveJoint, zEENeutral);
-	}
+	}*/
 
 	////
 
 	FString projDir = FPaths::ProjectDir();
 	std::string infilename = std::string(TCHAR_TO_UTF8(*projDir)) + "/joint_rotations.txt";
 	ofstream myfile;
-	myfile.open(infilename.c_str());
+	myfile.open(infilename.c_str(), std::ofstream::out | std::ofstream::trunc);
 
 	if (myfile.fail())
 	{
@@ -220,22 +273,24 @@ void AzSpaceManager::ExportJointRotations()
 		return;
 	}
 
+	myfile << std::to_string(Nachi.robot_gCode.size()) << endl;
+
 	for (int i = 0; i < Nachi.robot_gCode.size(); i++)
 	{
-	std::string jointSequence =   std::to_string(Nachi.robot_gCode[i].rotations[0].rotation) + ","
-								+ std::to_string(Nachi.robot_gCode[i].rotations[1].rotation) + ","
-								+ std::to_string(Nachi.robot_gCode[i].rotations[2].rotation) + ","
-								+ std::to_string(Nachi.robot_gCode[i].rotations[3].rotation) + ","
-								+ std::to_string(Nachi.robot_gCode[i].rotations[4].rotation) + ","
-								+ std::to_string(Nachi.robot_gCode[i].rotations[5].rotation) + ",";
+		std::string jointSequence =   std::to_string(Nachi.robot_gCode[i].rotations[0].rotation) + ","
+									+ std::to_string(Nachi.robot_gCode[i].rotations[1].rotation) + ","
+									+ std::to_string(Nachi.robot_gCode[i].rotations[2].rotation) + ","
+									+ std::to_string(Nachi.robot_gCode[i].rotations[3].rotation) + ","
+									+ std::to_string(Nachi.robot_gCode[i].rotations[4].rotation) + ","
+									+ std::to_string(Nachi.robot_gCode[i].rotations[5].rotation);
 
-		//myfile << jointSequence << endl;
+		myfile << jointSequence << endl;
 	}
 
 	//close file
 	myfile.close();
 
-	UE_LOG(LogTemp, Warning, TEXT(" nG-CODE Exported Succesfully "));
+	UE_LOG(LogTemp, Warning, TEXT(" G-CODE Exported Succesfully "));
 }
 
 FString AzSpaceManager::GetIKRotations()
@@ -269,6 +324,16 @@ FString AzSpaceManager::GetIKRotations()
 
 void AzSpaceManager::ResetRobot()
 {
+	if (FrameMeshActors.Num() != 0)
+	{
+		for (auto& actor : FrameMeshActors)
+		{
+			actor->Destroy();
+		}
+
+		FrameMeshActors.Empty();
+	}
+
 	zRobot_IK = false;
 
 	RobotSetup();
@@ -291,7 +356,7 @@ void AzSpaceManager::DisplayRobot()
 	UMeshFactory::CreateUMeshFromZMesh(r_meshObjs[4], Joint_04_Mesh, true);
 	UMeshFactory::CreateUMeshFromZMesh(r_meshObjs[5], Joint_05_Mesh, true);
 	UMeshFactory::CreateUMeshFromZMesh(r_meshObjs[6], Joint_06_Mesh, true);
-	UMeshFactory::CreateUMeshFromZMesh(r_meshObjs[7], EE_Mesh, true);
+	UMeshFactory::CreateUMeshFromZMesh(r_meshObjs[7], EE_Mesh, false);
 
 }
 
@@ -304,6 +369,6 @@ void AzSpaceManager::DrawRobotMesh()
 	UMeshFactory::UpdateUMeshFromZMesh(r_meshObjs[4], Joint_04_Mesh, true);
 	UMeshFactory::UpdateUMeshFromZMesh(r_meshObjs[5], Joint_05_Mesh, true);
 	UMeshFactory::UpdateUMeshFromZMesh(r_meshObjs[6], Joint_06_Mesh, true);
-	UMeshFactory::UpdateUMeshFromZMesh(r_meshObjs[7], EE_Mesh, true);
+	UMeshFactory::UpdateUMeshFromZMesh(r_meshObjs[7], EE_Mesh, false);
 }
 
