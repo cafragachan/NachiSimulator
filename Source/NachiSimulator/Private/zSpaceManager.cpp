@@ -85,7 +85,7 @@ void AzSpaceManager::RobotSetup()
 	//////// Set Endeffector Transform
 
 	robotEE.setIdentity();
-	robotEE(3, 2) -= 37.87;
+	robotEE(3, 2) -= 38.8;
 
 	Nachi.setEndEffector(robotEE);
 
@@ -212,7 +212,7 @@ void AzSpaceManager::SetObjectPath(FString ObjPath)
 	zFnMesh fnMesh(zObjectMesh);
 	fnMesh.from(objPath, zOBJ, true);
 
-	UMeshFactory::CreateUMeshFromZMesh(zObjectMesh, ObjectToCut, false);
+	UMeshFactory::CreateUMeshFromZMesh(zObjectMesh, ObjectToCut, true);
 }
 
 void AzSpaceManager::CreateOBJ(TArray<FString> ObjString)
@@ -235,7 +235,7 @@ void AzSpaceManager::CreateOBJ(TArray<FString> ObjString)
 	UE_LOG(LogTemp, Warning, TEXT("number of face polys: %i "), fnMesh.numPolygons());
 	//UE_LOG(LogTemp, Warning, TEXT("FILE %s"), *FString(objString.c_str()));
 
-	UMeshFactory::CreateUMeshFromZMesh(zObjectMesh, ObjectToCut, false);
+	UMeshFactory::CreateUMeshFromZMesh(zObjectMesh, ObjectToCut, true);
 }
 
 void AzSpaceManager::SetTargetCounter(int32 Counter)
